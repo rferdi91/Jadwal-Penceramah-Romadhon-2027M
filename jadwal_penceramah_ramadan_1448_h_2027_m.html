@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jadwal Penceramah Ramadan 1448 H / 2027 M</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Pola latar belakang Islami halus */
+        .islamic-pattern {
+            background-color: #064e3b;
+            background-image: radial-gradient(rgba(245, 158, 11, 0.15) 1px, transparent 1px),
+                              radial-gradient(rgba(16, 185, 129, 0.15) 1px, #064e3b 1px);
+            background-size: 24px 24px;
+            background-position: 0 0, 12px 12px;
+        }
+
+        /* Pengaturan khusus untuk Cetak (Print) */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 1.2cm;
+            }
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .print-table-container {
+                display: block !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                font-size: 10pt !important;
+            }
+            th, td {
+                border: 1px solid #334155 !important;
+                padding: 5px 8px !important;
+                text-align: left !important;
+            }
+            th {
+                background-color: #ecfdf5 !important;
+                color: #064e3b !important;
+                font-weight: 700 !important;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Header Utama (Disembunyikan saat Print) -->
+    <header class="islamic-pattern text-white shadow-lg no-print">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/80 border border-amber-400/40 text-amber-300 text-xs font-semibold mb-2">
+                        <i data-lucide="moon" class="w-3.5 h-3.5"></i>
+                        <span>Ramadan 1448 H / 2027 M (Hisab Muhammadiyah)</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                        Jadwal Penceramah Subuh & Tarawih
+                    </h1>
+                    <p class="text-amber-300 font-bold text-base sm:text-lg mt-0.5" id="active-venue-subtitle">
+                        Masjid Ar Rohman
+                    </p>
+                    <p class="text-emerald-100/90 text-xs sm:text-sm mt-1">
+                        Sistem pengisian jadwal online kolaboratif. Perubahan tersimpan otomatis & real-time.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button onclick="fetchScheduleData()" id="btn-refresh" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-semibold text-sm border border-emerald-500/40 shadow-sm transition active:scale-95">
+                        <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i>
+                        <span>Refresh Data</span>
+                    </button>
+                    <button onclick="openQuickFormModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold text-sm shadow-md transition active:scale-95">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Isi Jadwal</span>
+                    </button>
+                    <button onclick="fetchScheduleFromSheet()" id="refresh-btn" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-sm border border-emerald-500/40 shadow-sm transition active:scale-95">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        <span>Refresh Data</span>
+                    </button>
+                    <button onclick="exportToCSV()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-sm border border-emerald-500/40 shadow-sm transition active:scale-95">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Export CSV</span>
+                    </button>
+                    <button onclick="window.print()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-emerald-900 font-semibold text-sm shadow-sm transition active:scale-95">
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        <span>Cetak</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigasi Halaman / Tab Tempat -->
+            <nav class="mt-6 pt-4 border-t border-emerald-700/60 flex flex-wrap gap-2" aria-label="Pilih Tempat">
+                <button onclick="switchVenue('ar_rohman')" id="tab-ar_rohman" class="venue-tab px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 bg-white text-emerald-950 shadow-md">
+                    <i data-lucide="building-2" class="w-4 h-4"></i>
+                    <span>Masjid Ar Rohman</span>
+                </button>
+                <button onclick="switchVenue('makmur')" id="tab-makmur" class="venue-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 bg-emerald-800/70 text-emerald-100 hover:bg-emerald-700">
+                    <i data-lucide="building-2" class="w-4 h-4"></i>
+                    <span>Masjid Makmur</span>
+                </button>
+                <button onclick="switchVenue('mujahidin')" id="tab-mujahidin" class="venue-tab px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 bg-emerald-800/70 text-emerald-100 hover:bg-emerald-700">
+                    <i data-lucide="home" class="w-4 h-4"></i>
+                    <span>Mushola Mujahidin</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Kop Surat Khusus Cetak (Hanya muncul saat Print) -->
+    <div class="hidden print-only text-center mb-4 pb-3 border-b-2 border-emerald-800">
+        <h1 class="text-xl font-bold uppercase tracking-wide text-emerald-950">JADWAL PENCERAMAH SUBUH & TARAWIH</h1>
+        <h2 class="text-lg font-bold text-emerald-800 mt-0.5" id="print-venue-name">MASJID AR ROHMAN</h2>
+        <p class="text-sm font-semibold text-slate-700">RAMADAN 1448 H / 2027 M</p>
+        <p class="text-xs text-slate-500 mt-0.5">Berdasarkan Kalender Hisab Muhammadiyah (7 Februari – 9 Maret 2027)</p>
+    </div>
+
+    <!-- Konten Utama -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <!-- Status Koneksi & Ringkasan Statistik (Disembunyikan saat Print) -->
+        <section class="no-print space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Total Slot -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Slot Jadwal</p>
+                        <p class="text-2xl sm:text-3xl font-extrabold text-slate-800 mt-1" id="stat-total">60</p>
+                        <p class="text-xs text-slate-400 mt-0.5">30 Subuh & 30 Tarawih</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                        <i data-lucide="calendar-days" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Sudah Terisi -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-emerald-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700">Sudah Terisi</p>
+                        <p class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-1" id="stat-filled">0</p>
+                        <p class="text-xs text-emerald-600/80 mt-0.5" id="stat-percent">0% selesai</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Belum Terisi -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-amber-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-amber-700">Belum Terisi</p>
+                        <p class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1" id="stat-empty">60</p>
+                        <p class="text-xs text-amber-600/80 mt-0.5">Menunggu penceramah</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                        <i data-lucide="clock" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-600 mb-2">
+                    <span>Progres Pengisian Jadwal</span>
+                    <span id="connection-status" class="inline-flex items-center gap-1.5 text-amber-600">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        Menghubungkan ke database...
+                    </span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                    <div id="progress-bar" class="bg-emerald-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Pencarian & Filter -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="search-input" placeholder="Cari nama penceramah atau tanggal (misal: 15 Februari)..."
+                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                </div>
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                    <button onclick="setFilter('all')" id="filter-all" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-700 text-white transition whitespace-nowrap">
+                        Semua (31)
+                    </button>
+                    <button onclick="setFilter('filled')" id="filter-filled" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">
+                        Sudah Terisi
+                    </button>
+                    <button onclick="setFilter('empty')" id="filter-empty" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition whitespace-nowrap">
+                        Belum Terisi
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabel Jadwal (Tampil di Desktop & Selalu Tampil saat Print) -->
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print-table-container hidden md:block">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-emerald-900 text-white text-xs sm:text-sm uppercase tracking-wider">
+                            <th class="py-3.5 px-4 font-bold w-1/4">Hari, Tanggal</th>
+                            <th class="py-3.5 px-4 font-bold w-[37.5%]">Penceramah Subuh</th>
+                            <th class="py-3.5 px-4 font-bold w-[37.5%]">Penceramah Tarawih (Malam)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-table-body" class="divide-y divide-slate-200 text-sm">
+                        <!-- Baris di-render oleh JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Tampilan Kartu untuk Mobile (Disembunyikan di Desktop & saat Print) -->
+        <section id="schedule-mobile-cards" class="grid grid-cols-1 gap-3 md:hidden no-print">
+            <!-- Kartu di-render oleh JavaScript -->
+        </section>
+
+        <!-- Empty State jika pencarian tidak ditemukan -->
+        <div id="empty-state" class="hidden text-center py-12 bg-white rounded-2xl border border-slate-200 no-print">
+            <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="search-x" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-700">Jadwal tidak ditemukan</h3>
+            <p class="text-sm text-slate-500 mt-1">Coba ubah kata kunci pencarian atau filter status Anda.</p>
+        </div>
+
+    </main>
+
+    <!-- Footer (Disembunyikan saat Print) -->
+    <footer class="bg-white border-t border-slate-200 py-5 mt-8 no-print">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 text-center text-xs text-slate-500">
+            <p>Jadwal Penceramah Ramadan 1448 H / 2027 M • Disinkronkan secara real-time</p>
+        </div>
+    </footer>
+
+    <!-- Modal Form Pengisian Cepat / Edit -->
+    <div id="quick-form-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 animate-fade-in">
+            <div class="bg-emerald-900 text-white px-5 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="edit-3" class="w-5 h-5 text-amber-400"></i>
+                    <div>
+                        <h3 class="font-bold text-base">Form Pengisian Jadwal</h3>
+                        <p class="text-xs text-emerald-200" id="modal-venue-name">Masjid Ar Rohman</p>
+                    </div>
+                </div>
+                <button onclick="closeQuickFormModal()" class="text-emerald-200 hover:text-white p-1 rounded-lg transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="quick-form" onsubmit="handleQuickFormSubmit(event)" class="p-5 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Pilih Tanggal</label>
+                    <select id="modal-date-select" onchange="onModalDateChange()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                        <!-- Opsi tanggal di-render JS -->
+                    </select>
+                </div>
+
+                <div id="modal-subuh-group">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        Penceramah Subuh <span id="modal-subuh-label" class="text-emerald-700 font-semibold"></span>
+                    </label>
+                    <input type="text" id="modal-subuh-input" placeholder="Masukkan nama penceramah Subuh..."
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div id="modal-tarawih-group">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                        Penceramah Tarawih <span id="modal-tarawih-label" class="text-amber-700 font-semibold"></span>
+                    </label>
+                    <input type="text" id="modal-tarawih-input" placeholder="Masukkan nama penceramah Tarawih..."
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-2">
+                    <button type="button" onclick="closeQuickFormModal()" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        Batal
+                    </button>
+                    <button type="submit" id="modal-save-btn" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-emerald-700 hover:bg-emerald-600 text-white shadow-sm transition">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span>Simpan Jadwal</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 hidden items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-semibold text-white transition-all duration-300 no-print">
+        <i id="toast-icon" data-lucide="check-circle" class="w-4 h-4"></i>
+        <span id="toast-message">Tersimpan!</span>
+    </div>
+
+    <!-- Google Apps Script Integration & Application Logic -->
+    <script>
+        // ==========================================
+        // 1. KONFIGURASI GOOGLE APPS SCRIPT & DATA
+        // ==========================================
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwDfnRS7PKiRLs8VeF0ZnFzcUxiA-IJJgb8Kq6EsnZKqNxab4cu-cm3hk6tRVO6zqffDg/exec";
+
+        const SCHEDULE_DATES = [
+            { id: "2027-02-07", row: 2, label: "Minggu, 7 Februari 2027", subuhNote: "(Belum masuk Ramadan)", subuhEditable: false, tarawihNote: "Malam ke-1", tarawihEditable: true },
+            { id: "2027-02-08", row: 3, label: "Senin, 8 Februari 2027", subuhNote: "Hari ke-1", subuhEditable: true, tarawihNote: "Malam ke-2", tarawihEditable: true },
+            { id: "2027-02-09", row: 4, label: "Selasa, 9 Februari 2027", subuhNote: "Hari ke-2", subuhEditable: true, tarawihNote: "Malam ke-3", tarawihEditable: true },
+            { id: "2027-02-10", row: 5, label: "Rabu, 10 Februari 2027", subuhNote: "Hari ke-3", subuhEditable: true, tarawihNote: "Malam ke-4", tarawihEditable: true },
+            { id: "2027-02-11", row: 6, label: "Kamis, 11 Februari 2027", subuhNote: "Hari ke-4", subuhEditable: true, tarawihNote: "Malam ke-5", tarawihEditable: true },
+            { id: "2027-02-12", row: 7, label: "Jumat, 12 Februari 2027", subuhNote: "Hari ke-5", subuhEditable: true, tarawihNote: "Malam ke-6", tarawihEditable: true },
+            { id: "2027-02-13", row: 8, label: "Sabtu, 13 Februari 2027", subuhNote: "Hari ke-6", subuhEditable: true, tarawihNote: "Malam ke-7", tarawihEditable: true },
+            { id: "2027-02-14", row: 9, label: "Minggu, 14 Februari 2027", subuhNote: "Hari ke-7", subuhEditable: true, tarawihNote: "Malam ke-8", tarawihEditable: true },
+            { id: "2027-02-15", row: 10, label: "Senin, 15 Februari 2027", subuhNote: "Hari ke-8", subuhEditable: true, tarawihNote: "Malam ke-9", tarawihEditable: true },
+            { id: "2027-02-16", row: 11, label: "Selasa, 16 Februari 2027", subuhNote: "Hari ke-9", subuhEditable: true, tarawihNote: "Malam ke-10", tarawihEditable: true },
+            { id: "2027-02-17", row: 12, label: "Rabu, 17 Februari 2027", subuhNote: "Hari ke-10", subuhEditable: true, tarawihNote: "Malam ke-11", tarawihEditable: true },
+            { id: "2027-02-18", row: 13, label: "Kamis, 18 Februari 2027", subuhNote: "Hari ke-11", subuhEditable: true, tarawihNote: "Malam ke-12", tarawihEditable: true },
+            { id: "2027-02-19", row: 14, label: "Jumat, 19 Februari 2027", subuhNote: "Hari ke-12", subuhEditable: true, tarawihNote: "Malam ke-13", tarawihEditable: true },
+            { id: "2027-02-20", row: 15, label: "Sabtu, 20 Februari 2027", subuhNote: "Hari ke-13", subuhEditable: true, tarawihNote: "Malam ke-14", tarawihEditable: true },
+            { id: "2027-02-21", row: 16, label: "Minggu, 21 Februari 2027", subuhNote: "Hari ke-14", subuhEditable: true, tarawihNote: "Malam ke-15", tarawihEditable: true },
+            { id: "2027-02-22", row: 17, label: "Senin, 22 Februari 2027", subuhNote: "Hari ke-15", subuhEditable: true, tarawihNote: "Malam ke-16", tarawihEditable: true },
+            { id: "2027-02-23", row: 18, label: "Selasa, 23 Februari 2027", subuhNote: "Hari ke-16", subuhEditable: true, tarawihNote: "Malam ke-17", tarawihEditable: true },
+            { id: "2027-02-24", row: 19, label: "Rabu, 24 Februari 2027", subuhNote: "Hari ke-17", subuhEditable: true, tarawihNote: "Malam ke-18", tarawihEditable: true },
+            { id: "2027-02-25", row: 20, label: "Kamis, 25 Februari 2027", subuhNote: "Hari ke-18", subuhEditable: true, tarawihNote: "Malam ke-19", tarawihEditable: true },
+            { id: "2027-02-26", row: 21, label: "Jumat, 26 Februari 2027", subuhNote: "Hari ke-19", subuhEditable: true, tarawihNote: "Malam ke-20", tarawihEditable: true },
+            { id: "2027-02-27", row: 22, label: "Sabtu, 27 Februari 2027", subuhNote: "Hari ke-20", subuhEditable: true, tarawihNote: "Malam ke-21", tarawihEditable: true },
+            { id: "2027-02-28", row: 23, label: "Minggu, 28 Februari 2027", subuhNote: "Hari ke-21", subuhEditable: true, tarawihNote: "Malam ke-22", tarawihEditable: true },
+            { id: "2027-03-01", row: 24, label: "Senin, 1 Maret 2027", subuhNote: "Hari ke-22", subuhEditable: true, tarawihNote: "Malam ke-23", tarawihEditable: true },
+            { id: "2027-03-02", row: 25, label: "Selasa, 2 Maret 2027", subuhNote: "Hari ke-23", subuhEditable: true, tarawihNote: "Malam ke-24", tarawihEditable: true },
+            { id: "2027-03-03", row: 26, label: "Rabu, 3 Maret 2027", subuhNote: "Hari ke-24", subuhEditable: true, tarawihNote: "Malam ke-25", tarawihEditable: true },
+            { id: "2027-03-04", row: 27, label: "Kamis, 4 Maret 2027", subuhNote: "Hari ke-25", subuhEditable: true, tarawihNote: "Malam ke-26", tarawihEditable: true },
+            { id: "2027-03-05", row: 28, label: "Jumat, 5 Maret 2027", subuhNote: "Hari ke-26", subuhEditable: true, tarawihNote: "Malam ke-27", tarawihEditable: true },
+            { id: "2027-03-06", row: 29, label: "Sabtu, 6 Maret 2027", subuhNote: "Hari ke-27", subuhEditable: true, tarawihNote: "Malam ke-28", tarawihEditable: true },
+            { id: "2027-03-07", row: 30, label: "Minggu, 7 Maret 2027", subuhNote: "Hari ke-28", subuhEditable: true, tarawihNote: "Malam ke-29", tarawihEditable: true },
+            { id: "2027-03-08", row: 31, label: "Senin, 8 Maret 2027", subuhNote: "Hari ke-29", subuhEditable: true, tarawihNote: "Malam ke-30", tarawihEditable: true },
+            { id: "2027-03-09", row: 32, label: "Selasa, 9 Maret 2027", subuhNote: "Hari ke-30", subuhEditable: true, tarawihNote: "(Malam Takbiran)", tarawihEditable: false }
+        ];
+
+        const VENUES = {
+            ar_rohman: { id: 'ar_rohman', name: 'Masjid Ar Rohman' },
+            makmur: { id: 'makmur', name: 'Masjid Makmur' },
+            mujahidin: { id: 'mujahidin', name: 'Mushola Mujahidin' }
+        };
+
+        // State Aplikasi
+        let currentVenue = 'ar_rohman';
+        let allVenuesData = { ar_rohman: {}, makmur: {}, mujahidin: {} };
+        let scheduleData = {};
+        let currentFilter = 'all';
+        let searchQuery = '';
+        let isLoading = false;
+
+        // ==========================================
+        // 2. SINKRONISASI GOOGLE SHEETS (GET & POST)
+        // ==========================================
+        window.fetchScheduleFromSheet = async function() {
+            const sheetName = VENUES[currentVenue].name;
+            setLoadingState(true, 'Mengambil data dari Google Sheet...');
+
+            try {
+                const response = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(sheetName)}`);
+                const result = await response.json();
+
+                if (result.status === 'success' && Array.isArray(result.data)) {
+                    const mappedData = {};
+                    result.data.forEach(item => {
+                        const dateObj = SCHEDULE_DATES.find(d => d.row === Number(item.row));
+                        if (dateObj) {
+                            mappedData[dateObj.id] = {
+                                subuh: (item.subuh || '').toString().trim(),
+                                tarawih: (item.tarawih || '').toString().trim()
+                            };
+                        }
+                    });
+                    allVenuesData[currentVenue] = mappedData;
+                    scheduleData = mappedData;
+                    updateConnectionStatus('online', `Terhubung ke Google Sheet (${sheetName})`);
+                    renderAll();
+                } else {
+                    throw new Error(result.message || 'Gagal memuat data');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                updateConnectionStatus('error', 'Gagal terhubung ke Google Sheet');
+                showToast('Gagal mengambil data terbaru', 'error');
+            } finally {
+                setLoadingState(false);
+            }
+        };
+
+        async function saveSlotToSheet(dateId, tipe, nama) {
+            const trimmedName = nama.trim();
+            if (!trimmedName) {
+                showToast('Nama penceramah tidak boleh kosong', 'error');
+                return false;
+            }
+
+            const dateObj = SCHEDULE_DATES.find(d => d.id === dateId);
+            if (!dateObj) return false;
+
+            const sheetName = VENUES[currentVenue].name;
+            setLoadingState(true, 'Menyimpan ke Google Sheet...');
+
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        sheet: sheetName,
+                        row: dateObj.row,
+                        tipe: tipe,
+                        nama: trimmedName
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    if (!allVenuesData[currentVenue][dateId]) {
+                        allVenuesData[currentVenue][dateId] = { subuh: '', tarawih: '' };
+                    }
+                    allVenuesData[currentVenue][dateId][tipe] = trimmedName;
+                    scheduleData = allVenuesData[currentVenue];
+                    showToast('Jadwal berhasil disimpan!', 'success');
+                    renderAll();
+                    return true;
+                } else if (result.status === 'locked') {
+                    showToast(result.message || 'Slot sudah terisi oleh orang lain!', 'error');
+                    await fetchScheduleFromSheet();
+                    return false;
+                } else {
+                    showToast(result.message || 'Gagal menyimpan jadwal', 'error');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                showToast('Koneksi bermasalah saat menyimpan', 'error');
+                return false;
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        function setLoadingState(loading, statusText = '') {
+            isLoading = loading;
+            const refreshBtn = document.getElementById('refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.disabled = loading;
+                refreshBtn.classList.toggle('opacity-70', loading);
+            }
+            if (loading && statusText) {
+                updateConnectionStatus('loading', statusText);
+            }
+        }
+
+        // Ganti Halaman / Tab Tempat
+        window.switchVenue = function(venueId) {
+            if (!VENUES[venueId] || currentVenue === venueId) return;
+            currentVenue = venueId;
+            scheduleData = allVenuesData[currentVenue] || {};
+
+            // Update tampilan tab aktif
+            document.querySelectorAll('.venue-tab').forEach(tab => {
+                tab.classList.remove('bg-white', 'text-emerald-950', 'shadow-md', 'font-bold');
+                tab.classList.add('bg-emerald-800/70', 'text-emerald-100', 'font-semibold');
+            });
+            const activeTab = document.getElementById(`tab-${venueId}`);
+            activeTab.classList.remove('bg-emerald-800/70', 'text-emerald-100', 'font-semibold');
+            activeTab.classList.add('bg-white', 'text-emerald-950', 'shadow-md', 'font-bold');
+
+            // Update judul tempat di header, kop cetak, dan modal
+            const venueName = VENUES[venueId].name;
+            document.getElementById('active-venue-subtitle').textContent = venueName;
+            document.getElementById('print-venue-name').textContent = venueName.toUpperCase();
+            document.getElementById('modal-venue-name').textContent = venueName;
+
+            renderAll();
+            fetchScheduleFromSheet();
+        };
+
+        // ==========================================
+        // 3. RENDERING UI (TABEL, KARTU MOBILE, STATS)
+        // ==========================================
+        function renderAll() {
+            updateStats();
+            renderTableAndCards();
+            lucide.createIcons();
+        }
+
+        function updateStats() {
+            let filled = 0;
+            const total = 60; // 30 Subuh + 30 Tarawih
+
+            SCHEDULE_DATES.forEach(item => {
+                const data = scheduleData[item.id] || {};
+                if (item.subuhEditable && data.subuh && data.subuh.trim() !== '') filled++;
+                if (item.tarawihEditable && data.tarawih && data.tarawih.trim() !== '') filled++;
+            });
+
+            const empty = total - filled;
+            const percent = Math.round((filled / total) * 100);
+
+            document.getElementById('stat-filled').textContent = filled;
+            document.getElementById('stat-empty').textContent = empty;
+            document.getElementById('stat-percent').textContent = `${percent}% selesai`;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+        }
+
+        function getFilteredDates() {
+            return SCHEDULE_DATES.filter(item => {
+                const data = scheduleData[item.id] || {};
+                const subuhName = (data.subuh || '').toLowerCase();
+                const tarawihName = (data.tarawih || '').toLowerCase();
+                const dateLabel = item.label.toLowerCase();
+                const query = searchQuery.toLowerCase().trim();
+
+                const matchesSearch = !query ||
+                    dateLabel.includes(query) ||
+                    subuhName.includes(query) ||
+                    tarawihName.includes(query);
+
+                if (!matchesSearch) return false;
+
+                if (currentFilter === 'filled') {
+                    const hasSubuh = item.subuhEditable && subuhName !== '';
+                    const hasTarawih = item.tarawihEditable && tarawihName !== '';
+                    return hasSubuh || hasTarawih;
+                }
+                if (currentFilter === 'empty') {
+                    const emptySubuh = item.subuhEditable && subuhName === '';
+                    const emptyTarawih = item.tarawihEditable && tarawihName === '';
+                    return emptySubuh || emptyTarawih;
+                }
+                return true;
+            });
+        }
+
+        function renderTableAndCards() {
+            const filtered = getFilteredDates();
+            const tbody = document.getElementById('schedule-table-body');
+            const mobileContainer = document.getElementById('schedule-mobile-cards');
+            const emptyState = document.getElementById('empty-state');
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                mobileContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            // Render Tabel Desktop & Print
+            tbody.innerHTML = filtered.map((item, idx) => {
+                const data = scheduleData[item.id] || {};
+                const subuhVal = escapeHtml(data.subuh || '');
+                const tarawihVal = escapeHtml(data.tarawih || '');
+                const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+
+                // Kolom Subuh (Anti-Timpa: terkunci jika sudah terisi)
+                let subuhCell = '';
+                if (!item.subuhEditable) {
+                    subuhCell = `<span class="text-slate-400 italic text-xs sm:text-sm">${item.subuhNote}</span>`;
+                } else if (subuhVal !== '') {
+                    subuhCell = `
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs font-bold text-emerald-700">${item.subuhNote}:</span>
+                            <div class="no-print inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-950 font-semibold text-sm">
+                                <i data-lucide="lock" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+                                <span>${subuhVal}</span>
+                            </div>
+                            <span class="hidden print-only font-medium">${subuhVal}</span>
+                        </div>
+                    `;
+                } else {
+                    subuhCell = `
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs font-bold text-emerald-700">${item.subuhNote}:</span>
+                            <div class="no-print flex items-center gap-1.5">
+                                <input type="text" id="input-subuh-${item.id}" placeholder="Isi nama penceramah..."
+                                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                                <button onclick="window.handleInlineSave('${item.id}', 'subuh', 'input-subuh-${item.id}')"
+                                    class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold shrink-0 transition">
+                                    Simpan
+                                </button>
+                            </div>
+                            <span class="hidden print-only font-medium">........................................</span>
+                        </div>
+                    `;
+                }
+
+                // Kolom Tarawih (Anti-Timpa: terkunci jika sudah terisi)
+                let tarawihCell = '';
+                if (!item.tarawihEditable) {
+                    tarawihCell = `<span class="text-slate-400 italic text-xs sm:text-sm">${item.tarawihNote}</span>`;
+                } else if (tarawihVal !== '') {
+                    tarawihCell = `
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs font-bold text-amber-700">${item.tarawihNote}:</span>
+                            <div class="no-print inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-950 font-semibold text-sm">
+                                <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
+                                <span>${tarawihVal}</span>
+                            </div>
+                            <span class="hidden print-only font-medium">${tarawihVal}</span>
+                        </div>
+                    `;
+                } else {
+                    tarawihCell = `
+                        <div class="flex flex-col gap-1">
+                            <span class="text-xs font-bold text-amber-700">${item.tarawihNote}:</span>
+                            <div class="no-print flex items-center gap-1.5">
+                                <input type="text" id="input-tarawih-${item.id}" placeholder="Isi nama penceramah..."
+                                    class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                                <button onclick="window.handleInlineSave('${item.id}', 'tarawih', 'input-tarawih-${item.id}')"
+                                    class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shrink-0 transition">
+                                    Simpan
+                                </button>
+                            </div>
+                            <span class="hidden print-only font-medium">........................................</span>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <tr class="${rowBg} hover:bg-emerald-50/30 transition">
+                        <td class="py-3 px-4 font-semibold text-slate-800 align-top">${item.label}</td>
+                        <td class="py-3 px-4 align-top">${subuhCell}</td>
+                        <td class="py-3 px-4 align-top">${tarawihCell}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Render Kartu Mobile
+            mobileContainer.innerHTML = filtered.map(item => {
+                const data = scheduleData[item.id] || {};
+                const subuhVal = escapeHtml(data.subuh || '');
+                const tarawihVal = escapeHtml(data.tarawih || '');
+                const canEditAny = (item.subuhEditable && !subuhVal) || (item.tarawihEditable && !tarawihVal);
+
+                return `
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                            <span class="font-bold text-slate-800 text-sm">${item.label}</span>
+                            ${canEditAny ? `
+                                <button onclick="window.openQuickFormModal('${item.id}')" class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                                    Isi Jadwal
+                                </button>
+                            ` : `
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
+                                    <i data-lucide="lock" class="w-3 h-3"></i> Terkunci
+                                </span>
+                            `}
+                        </div>
+
+                        <div class="space-y-2.5">
+                            <div>
+                                <div class="text-xs font-bold text-emerald-700 mb-1">Penceramah Subuh ${item.subuhEditable ? `(${item.subuhNote})` : ''}</div>
+                                ${!item.subuhEditable ? `<p class="text-xs italic text-slate-400">${item.subuhNote}</p>` :
+                                    subuhVal ? `
+                                        <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 font-semibold text-sm">
+                                            <i data-lucide="lock" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+                                            <span>${subuhVal}</span>
+                                        </div>
+                                    ` : `
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" id="mob-subuh-${item.id}" placeholder="Isi nama penceramah Subuh..."
+                                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                            <button onclick="window.handleInlineSave('${item.id}', 'subuh', 'mob-subuh-${item.id}')"
+                                                class="px-3.5 py-2 rounded-xl bg-emerald-700 text-white text-xs font-bold shrink-0">
+                                                Simpan
+                                            </button>
+                                        </div>
+                                    `
+                                }
+                            </div>
+
+                            <div>
+                                <div class="text-xs font-bold text-amber-700 mb-1">Penceramah Tarawih ${item.tarawihEditable ? `(${item.tarawihNote})` : ''}</div>
+                                ${!item.tarawihEditable ? `<p class="text-xs italic text-slate-400">${item.tarawihNote}</p>` :
+                                    tarawihVal ? `
+                                        <div class="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 font-semibold text-sm">
+                                            <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-600 shrink-0"></i>
+                                            <span>${tarawihVal}</span>
+                                        </div>
+                                    ` : `
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" id="mob-tarawih-${item.id}" placeholder="Isi nama penceramah Tarawih..."
+                                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                            <button onclick="window.handleInlineSave('${item.id}', 'tarawih', 'mob-tarawih-${item.id}')"
+                                                class="px-3.5 py-2 rounded-xl bg-amber-600 text-white text-xs font-bold shrink-0">
+                                                Simpan
+                                            </button>
+                                        </div>
+                                    `
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // 4. INTERAKSI & EVENT HANDLERS
+        // ==========================================
+        window.handleInlineSave = async function(dateId, tipe, inputElementId) {
+            const inputEl = document.getElementById(inputElementId);
+            if (!inputEl) return;
+            await saveSlotToSheet(dateId, tipe, inputEl.value);
+        };
+
+        window.setFilter = function(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-emerald-700', 'text-white');
+                btn.classList.add('bg-slate-100', 'text-slate-600');
+            });
+            const activeBtn = document.getElementById(`filter-${filter}`);
+            activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+            activeBtn.classList.add('bg-emerald-700', 'text-white');
+            renderTableAndCards();
+            lucide.createIcons();
+        };
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            renderTableAndCards();
+            lucide.createIcons();
+        });
+
+        // Modal Form Pengisian Cepat
+        window.openQuickFormModal = function(preselectDateId = null) {
+            const select = document.getElementById('modal-date-select');
+            select.innerHTML = SCHEDULE_DATES.map(item =>
+                `<option value="${item.id}">${item.label}</option>`
+            ).join('');
+
+            if (preselectDateId) {
+                select.value = preselectDateId;
+            }
+            onModalDateChange();
+            const modal = document.getElementById('quick-form-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeQuickFormModal = function() {
+            const modal = document.getElementById('quick-form-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.onModalDateChange = function() {
+            const dateId = document.getElementById('modal-date-select').value;
+            const item = SCHEDULE_DATES.find(d => d.id === dateId);
+            const data = scheduleData[dateId] || {};
+
+            const subuhGroup = document.getElementById('modal-subuh-group');
+            const subuhInput = document.getElementById('modal-subuh-input');
+            const subuhLabel = document.getElementById('modal-subuh-label');
+
+            const tarawihGroup = document.getElementById('modal-tarawih-group');
+            const tarawihInput = document.getElementById('modal-tarawih-input');
+            const tarawihLabel = document.getElementById('modal-tarawih-label');
+
+            if (item.subuhEditable) {
+                subuhGroup.classList.remove('hidden');
+                subuhLabel.textContent = `(${item.subuhNote})`;
+                subuhInput.value = data.subuh || '';
+                subuhInput.disabled = !!(data.subuh && data.subuh.trim() !== '');
+                subuhInput.classList.toggle('bg-slate-100', subuhInput.disabled);
+            } else {
+                subuhGroup.classList.add('hidden');
+            }
+
+            if (item.tarawihEditable) {
+                tarawihGroup.classList.remove('hidden');
+                tarawihLabel.textContent = `(${item.tarawihNote})`;
+                tarawihInput.value = data.tarawih || '';
+                tarawihInput.disabled = !!(data.tarawih && data.tarawih.trim() !== '');
+                tarawihInput.classList.toggle('bg-slate-100', tarawihInput.disabled);
+            } else {
+                tarawihGroup.classList.add('hidden');
+            }
+        };
+
+        window.handleQuickFormSubmit = async function(e) {
+            e.preventDefault();
+            const dateId = document.getElementById('modal-date-select').value;
+            const item = SCHEDULE_DATES.find(d => d.id === dateId);
+            const data = scheduleData[dateId] || {};
+
+            const subuhInput = document.getElementById('modal-subuh-input');
+            const tarawihInput = document.getElementById('modal-tarawih-input');
+
+            if (item.subuhEditable && !data.subuh && subuhInput.value.trim() !== '') {
+                await saveSlotToSheet(dateId, 'subuh', subuhInput.value);
+            }
+            if (item.tarawihEditable && !data.tarawih && tarawihInput.value.trim() !== '') {
+                await saveSlotToSheet(dateId, 'tarawih', tarawihInput.value);
+            }
+
+            closeQuickFormModal();
+        };
+
+        // Export ke CSV (Excel-friendly dengan UTF-8 BOM)
+        window.exportToCSV = function() {
+            const venueName = VENUES[currentVenue].name;
+            const safeVenueFileName = venueName.replace(/\s+/g, '_');
+            const headers = ['Tempat', 'Hari, Tanggal', 'Penceramah Subuh', 'Penceramah Tarawih (Malam)'];
+            const rows = SCHEDULE_DATES.map(item => {
+                const data = scheduleData[item.id] || {};
+                const subuhText = item.subuhEditable
+                    ? `${item.subuhNote}: ${data.subuh || '-'}`
+                    : item.subuhNote;
+                const tarawihText = item.tarawihEditable
+                    ? `${item.tarawihNote}: ${data.tarawih || '-'}`
+                    : item.tarawihNote;
+
+                return [
+                    `"${venueName}"`,
+                    `"${item.label}"`,
+                    `"${subuhText.replace(/"/g, '""')}"`,
+                    `"${tarawihText.replace(/"/g, '""')}"`
+                ].join(',');
+            });
+
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Jadwal_Penceramah_${safeVenueFileName}_2027.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast(`CSV ${venueName} berhasil diunduh!`, 'success');
+        };
+
+        // ==========================================
+        // 5. UTILITIES
+        // ==========================================
+        function updateConnectionStatus(status, text) {
+            const el = document.getElementById('connection-status');
+            if (status === 'online') {
+                el.className = 'inline-flex items-center gap-1.5 text-emerald-700';
+                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${text}`;
+            } else if (status === 'loading') {
+                el.className = 'inline-flex items-center gap-1.5 text-amber-600';
+                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> ${text}`;
+            } else if (status === 'error') {
+                el.className = 'inline-flex items-center gap-1.5 text-red-600';
+                el.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> ${text}`;
+            }
+        }
+
+        let toastTimeout;
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            msgEl.textContent = message;
+
+            toast.className = `fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-semibold text-white transition-all duration-300 no-print ${type === 'error' ? 'bg-red-600' : 'bg-emerald-800'}`;
+            toast.classList.remove('hidden');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>"']/g, function(m) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m];
+            });
+        }
+
+        // Jalankan saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAll();
+            fetchScheduleFromSheet();
+        });
+    </script>
+</body>
+</html>
